@@ -1,4 +1,6 @@
 # xauto-image-server
 
-Diagram of communication flow between xauto API and image server.
-![Diagram](https://i.gyazo.com/2a416ac0417859dae1e7cf7e754ba523.png)
+A simple diagram of communication flow between xauto API and image server.
+It does not include include details, and is used as a plan to build the image server API.
+
+![Diagram](https://i.gyazo.com/a56fcca2e974bd00df0b6ba4335ba62a.png)
