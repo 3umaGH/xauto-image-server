@@ -9,7 +9,7 @@ admin.initializeApp({
 
 export const withAuth = async (req: RequestWithAuth, res: Response, next: NextFunction) => {
   try {
-    const idToken = req.headers.get('authorization')
+    const idToken = req.headers.authorization
 
     if (!idToken) return res.status(401).send({ message: 'Unauthorized: No ID token provided' })
 

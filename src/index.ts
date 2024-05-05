@@ -19,6 +19,9 @@ app.use(
 const startServer = async () => {
   await connectDB()
 
+  app.use('/image', require('./routes/image'))
+  app.use('/cdn', express.static(path.join(__dirname, './../uploads')))
+
   app.use(errorHandler)
 
   app.listen(EXPRESS_PORT, () => {

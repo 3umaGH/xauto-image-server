@@ -1,14 +1,16 @@
 import { Image, ImageContainer } from '../types/image'
 import { ImageContainerDTO, ImageDTO } from '../types/dto/imageContainerDTO'
+import { bytesToMB, roundDecimals } from '../util/util'
 
 export const imageContainerToDTO = (container: ImageContainer): ImageContainerDTO => {
-  const { images, total_size_mb, _owner } = container
+  const { images, total_size, _owner } = container
+  const total_size_mb = roundDecimals(bytesToMB(total_size), 2)
 
   return { images: images.map(image => imageToDTO(image)), total_size_mb, _owner }
 }
 
 const imageToDTO = (image: Image): ImageDTO => {
-  const { id, order, url, size_mb, status } = image
+  const { id, order, url, size, status } = image
 
-  return { id, order, url, size_mb, status, ...(image.status === 'ERROR' ? { error: image.error } : {}) }
+  return { id, order, url, size, status, ...(image.status === 'ERROR' ? { error: image.error } : {}) }
 }
