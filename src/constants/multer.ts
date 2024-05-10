@@ -1,6 +1,7 @@
 import multer from 'multer'
 import { MAX_CONTAINER_SIZE_MB } from './config'
 import * as fs from 'fs'
+import { getContainerOrNull } from '../database/operations/imageOperations'
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -27,6 +28,7 @@ export const upload = multer({
     if (!file.mimetype.startsWith('image/')) {
       return cb(new Error('File must be an image'))
     }
+
     cb(null, true)
   },
 

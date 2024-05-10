@@ -1,13 +1,15 @@
-import { WithCreatedUpdatedDates, WithOwner } from './common'
+import { WithCreatedUpdatedDates, WithObjectID, WithOwner } from './common'
 
 export type ImageStatus = 'OPTIMIZING' | 'ERROR' | 'READY'
-export type Image = ImageInProcess | UploadedImage | OptimizedImage | ImageWithError
+export type Image = ImageInProcess | OptimizedImage | ImageWithError
 
-export type ImageContainer = {
+export type DraftImageContainer = {
   total_size: number
   images: Image[]
 } & WithCreatedUpdatedDates &
   WithOwner
+
+export type ImageContainer = DraftImageContainer & WithObjectID
 
 type ImageBase = {
   id: string
@@ -29,10 +31,6 @@ type ImageInProcess = ImageBase & {
 
 type OptimizedImage = ImageBase & {
   status: 'DONE'
-}
-
-type UploadedImage = ImageBase & {
-  status: 'UPLOADED'
 }
 
 export enum IMAGE_CONTAINER_ACTION {

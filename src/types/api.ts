@@ -7,4 +7,7 @@ export type RequestWithAuth = {
   decodedAuth?: DecodedIdToken
 } & Request
 
-export type PostImageContainerAPIResponse = ImageContainerDTO;
+export type AddImagesToContainerAPIResponse = ImageContainerDTO
+export type GetContainerImagesAPIResponse = ImageContainerDTO
+
+export type ImageActionAPIResponse = ImageContainerDTO

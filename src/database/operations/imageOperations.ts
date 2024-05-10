@@ -1,10 +1,11 @@
 import { db } from '../database'
 import { ObjectId } from 'mongodb'
 import fs from 'fs'
-import { Image, ImageContainer } from '../../types/image'
+import { IMAGE_CONTAINER_ACTION, Image, ImageContainer } from '../../types/image'
 import { optimizeImage } from '../../optimizer'
-import { getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
-import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES } from '../../constants/config'
+import { calculateContainerSize, getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
+import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES, MAX_CONTAINER_SIZE_MB } from '../../constants/config'
+import { bytesToMB } from '../../util/util'
 
 const col = db.collection(IMAGE_CONTAINER_COLLETION)
 
@@ -23,6 +24,7 @@ export const getContainer = async (id: ObjectId) => {
 
   return container
 }
+
 const optimizeContainerImages = async (id: ObjectId) => {
   const container = await getContainer(id)
   const unprocessedImages = container.images.filter(img => img.status === 'OPTIMIZING')
@@ -31,6 +33,8 @@ const optimizeContainerImages = async (id: ObjectId) => {
     unprocessedImages.map(async img => {
       try {
         const newFileSize = await optimizeImage(img.local_path)
+
+        console.log('new size file', newFileSize)
 
         col.updateOne(
           { _id: id, 'images.id': img.id },
@@ -69,7 +73,33 @@ export const createImageContainer = async (
     _updatedBy: authUID,
   }
 
-  await col.insertOne({ _id: id, ...dataObj })
+  const result = await col.insertOne({ _id: id, ...dataObj })
+
+  optimizeContainerImages(id).then(() => {
+    updateTotalContainerSize(id)
+  })
+
+  return { _id: result.insertedId, ...dataObj }
+}
+
+export const appendImagesToContainer = async (authUID: string, id: ObjectId, files: Express.Multer.File[]) => {
+  const container = await getContainer(id)
+  const mappedImages = mapFilesToListingImages(id.toString(), files)
+
+  const orderedImages = [...container.images, ...mappedImages].map((image, index) => ({
+    ...image,
+    order: index,
+  }))
+
+  const dataObj: ImageContainer = {
+    ...container,
+    images: orderedImages,
+
+    _updatedBy: authUID,
+    _updatedAt: new Date().getTime(),
+  }
+
+  await col.updateOne({ _id: id }, { $set: { ...dataObj } })
 
   optimizeContainerImages(id).then(() => {
     updateTotalContainerSize(id)
@@ -80,7 +110,91 @@ export const createImageContainer = async (
 
 const updateTotalContainerSize = async (id: ObjectId) => {
   const container = await getContainer(id)
-  const newSize = container.images.reduce((acc: number, image: Image) => (acc += image.size), 0)
+  const newSize = calculateContainerSize(container)
+
+  console.log('prev size:', container.total_size, 'new: ', newSize)
 
   return col.updateOne({ _id: id }, { $set: { total_size: newSize } })
+}
+
+export const deleteImageFromContainer = async (authUID: string, container: ImageContainer, imageId: string) => {
+  let images = container.images
+  const targetIndex = images.findIndex(img => img.id === imageId)
+
+  if (targetIndex === -1) throw new Error('Image not found')
+
+  fs.promises.unlink(images[targetIndex].local_path).catch(() => {})
+
+  images = images.filter(img => img.id !== imageId).map((image, index) => ({ ...image, order: index }))
+
+  const updatedContainer: ImageContainer = {
+    ...container,
+    images: images.sort((a, b) => a.order - b.order),
+    _updatedBy: authUID,
+    _updatedAt: new Date().getTime(),
+  }
+
+  await col.updateOne(
+    { _id: container._id },
+    { $set: { ...updatedContainer, total_size: calculateContainerSize(updatedContainer) } }
+  )
+
+  return updatedContainer
+}
+
+export const imageChangeOrder = async (
+  authUID: string,
+  container: ImageContainer,
+  imageId: string,
+  action: IMAGE_CONTAINER_ACTION.MOVE_UP_ORDER | IMAGE_CONTAINER_ACTION.MOVE_DOWN_ORDER
+) => {
+  let images = container.images
+  let hasUpdated = false
+
+  const targetIndex = images.findIndex(img => img.id === imageId)
+
+  if (targetIndex === -1) throw new Error('Image not found')
+
+  if (action === IMAGE_CONTAINER_ACTION.MOVE_UP_ORDER) {
+    const nextItem = targetIndex - 1
+
+    if (images[targetIndex].order === 0) {
+      return false
+    }
+
+    if (targetIndex > -1 && nextItem > -1) {
+      images[targetIndex].order = images[targetIndex].order - 1
+      images[nextItem].order = images[nextItem].order + 1
+      hasUpdated = true
+    }
+  }
+
+  if (action === IMAGE_CONTAINER_ACTION.MOVE_DOWN_ORDER) {
+    const nextItem = targetIndex + 1
+
+    if (images[targetIndex].order >= images.length - 1) {
+      return false
+    }
+
+    if (targetIndex > -1 && nextItem > -1) {
+      images[targetIndex].order = images[targetIndex].order + 1
+      images[nextItem].order = images[nextItem].order - 1
+      hasUpdated = true
+    }
+  }
+
+  if (!hasUpdated) {
+    return false
+  } else {
+    const updatedContainer: ImageContainer = {
+      ...container,
+      images: images.sort((a, b) => a.order - b.order),
+      _updatedBy: authUID,
+      _updatedAt: new Date().getTime(),
+    }
+
+    await col.updateOne({ _id: container._id }, { $set: updatedContainer })
+
+    return updatedContainer
+  }
 }

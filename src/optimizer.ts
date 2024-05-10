@@ -18,10 +18,11 @@ export const optimizeImage = async (path: string): Promise<number> => {
   while (retries < MAX_RETRIES) {
     try {
       await sharp(path).resize(1536).webp({ quality: 70 }).toFile(`${path}-temp`)
-      await fs.promises.rename(`${path}-temp`, path)
 
-      const stats = await fs.promises.stat(path)
+      const stats = await fs.promises.stat(`${path}-temp`)
       const file_size = stats.size
+
+      await fs.promises.rename(`${path}-temp`, path)
 
       return file_size
     } catch (error) {
