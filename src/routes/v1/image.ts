@@ -28,7 +28,7 @@ const handleCompareImages = async (prevContainer: ImageContainer, nextContainer:
 
   const didImageOrderUpdate = JSON.stringify(prevImages) !== JSON.stringify(newImages)
   if (didImageOrderUpdate) {
-    console.log('Sending update request to', nextContainer._id)
+    console.log('Sending update request to', nextContainer._id.toString())
 
     await onContainerUpdated(nextContainer._id.toString())
   }
@@ -55,7 +55,7 @@ router.post(
 
       if (existingContainer._owner != authUID) {
         deleteImageFiles(req.files as Express.Multer.File[])
-        return res.status(401).send({ message: 'Not an owner' })
+        return res.status(401).send({ message: 'Unauthorized' })
       }
 
       const result = await appendImagesToContainer(req.decodedAuth!.uid, containerID, files)
@@ -89,7 +89,7 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
     }
 
     if (container._owner != authUID) {
-      return res.status(401).send({ message: 'Not an owner' })
+      return res.status(401).send({ message: 'Unauthorized' })
     }
 
     const targetIndex = container.images.findIndex(img => img.id === imageId)
