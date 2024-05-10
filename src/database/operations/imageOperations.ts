@@ -34,8 +34,6 @@ const optimizeContainerImages = async (id: ObjectId) => {
       try {
         const newFileSize = await optimizeImage(img.local_path)
 
-        console.log('new size file', newFileSize)
-
         col.updateOne(
           { _id: id, 'images.id': img.id },
           { $set: { 'images.$.status': 'DONE', 'images.$.size': newFileSize } }
@@ -112,8 +110,6 @@ const updateTotalContainerSize = async (id: ObjectId) => {
   const container = await getContainer(id)
   const newSize = calculateContainerSize(container)
 
-  console.log('prev size:', container.total_size, 'new: ', newSize)
-
   return col.updateOne({ _id: id }, { $set: { total_size: newSize } })
 }
 
@@ -148,7 +144,7 @@ export const imageChangeOrder = async (
   imageId: string,
   action: IMAGE_CONTAINER_ACTION.MOVE_UP_ORDER | IMAGE_CONTAINER_ACTION.MOVE_DOWN_ORDER
 ) => {
-  let images = container.images
+  let images = [...container.images]
   let hasUpdated = false
 
   const targetIndex = images.findIndex(img => img.id === imageId)

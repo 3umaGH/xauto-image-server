@@ -4,6 +4,7 @@ import path from 'path'
 import { EXPRESS_PORT } from './constants/config'
 import { errorHandler } from './middleware/errorHandler'
 import { connectDB } from './database/database'
+import { withInternalSecret } from './middleware/withInternalSecret'
 
 const app: Application = express()
 
@@ -19,7 +20,8 @@ app.use(
 const startServer = async () => {
   await connectDB()
 
-  app.use('/image', require('./routes/image'))
+  app.use('/v1/image', require('./routes/v1/image'))
+  app.use('/v1/internal', withInternalSecret, require('./routes/v1/internal'))
   app.use('/cdn', express.static(path.join(__dirname, './../uploads')))
 
   app.use(errorHandler)

@@ -1,25 +1,38 @@
 import { NextFunction, Request, Response } from 'express'
 import { ObjectId } from 'mongodb'
-import { upload } from '../constants/multer'
+import { upload } from '../../constants/multer'
+import { MAX_CONTAINER_FILES } from '../../constants/config'
 import {
+  getContainerOrNull,
   appendImagesToContainer,
   createImageContainer,
   deleteImageFromContainer,
-  getContainer,
-  getContainerOrNull,
   imageChangeOrder,
-} from '../database/operations/imageOperations'
-import { withAuth } from '../middleware/withAuth'
-import { RequestWithAuth, AddImagesToContainerAPIResponse, ImageActionAPIResponse } from '../types/api'
-import { validateFileUpload } from '../middleware/validateFileUpload'
-import { imageContainerToDTO } from '../dto/imageContainerToDTO'
-import fs from 'fs'
-import { MAX_CONTAINER_FILES } from '../constants/config'
-import { IMAGE_CONTAINER_ACTION } from '../types/image'
-import { deleteImageFiles } from '../util/imageUtils'
+} from '../../database/operations/imageOperations'
+import { imageContainerToDTO } from '../../dto/imageContainerToDTO'
+import { validateFileUpload } from '../../middleware/validateFileUpload'
+import { withAuth } from '../../middleware/withAuth'
+import { RequestWithAuth, AddImagesToContainerAPIResponse, ImageActionAPIResponse } from '../../types/api'
+import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
+import { deleteImageFiles } from '../../util/imageUtils'
+import { onContainerUpdated } from '../../api/internal'
 
 const express = require('express')
 const router = express.Router()
+
+/* Sends to the main api internal endpoint a new container, if the first 3 images are different 
+between prev and next container. This is used to update the listings objects preview property. */
+const handleCompareImages = async (prevContainer: ImageContainer, nextContainer: ImageContainer) => {
+  const prevImages = prevContainer.images.splice(0, 3).map(img => img.id)
+  const newImages = nextContainer.images.splice(0, 3).map(img => img.id)
+
+  const didImageOrderUpdate = JSON.stringify(prevImages) !== JSON.stringify(newImages)
+  if (didImageOrderUpdate) {
+    console.log('Sending update request to', nextContainer._id)
+
+    await onContainerUpdated(nextContainer._id.toString())
+  }
+}
 
 router.post(
   '/:id',
@@ -35,27 +48,23 @@ router.post(
       const files = req.files as Express.Multer.File[]
       const existingContainer = await getContainerOrNull(containerID)
 
-      if (existingContainer && existingContainer._owner != authUID) {
+      if (!existingContainer) {
+        deleteImageFiles(req.files as Express.Multer.File[])
+        return res.status(404).send({ message: 'Container not found' })
+      }
+
+      if (existingContainer._owner != authUID) {
         deleteImageFiles(req.files as Express.Multer.File[])
         return res.status(401).send({ message: 'Not an owner' })
       }
 
-      try {
-        const result = existingContainer
-          ? await appendImagesToContainer(req.decodedAuth!.uid, containerID, files)
-          : await createImageContainer(req.decodedAuth!.uid, containerID, files)
+      const result = await appendImagesToContainer(req.decodedAuth!.uid, containerID, files)
+      const response: AddImagesToContainerAPIResponse = imageContainerToDTO(result)
 
-        const response: AddImagesToContainerAPIResponse = imageContainerToDTO(result)
-
-        return res.status(200).send(response)
-      } catch (err) {
-        if (req.files) {
-          deleteImageFiles(req.files as Express.Multer.File[])
-        }
-
-        if (err instanceof Error) return res.status(400).send({ message: err.message })
-      }
+      await handleCompareImages(existingContainer, result)
+      return res.status(200).send(response)
     } catch (err) {
+      deleteImageFiles(req.files as Express.Multer.File[])
       next(err)
     }
   }
@@ -93,6 +102,7 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
       const result = await deleteImageFromContainer(req.decodedAuth!.uid, container, imageId)
       const response: ImageActionAPIResponse = imageContainerToDTO(result)
 
+      await handleCompareImages(container, result)
       return res.status(200).send(response)
     }
 
@@ -101,6 +111,8 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
 
       if (result) {
         const response: ImageActionAPIResponse = imageContainerToDTO(result)
+
+        await handleCompareImages(container, result)
         return res.status(200).send(response)
       } else {
         return res.status(200).send(imageContainerToDTO(container))
