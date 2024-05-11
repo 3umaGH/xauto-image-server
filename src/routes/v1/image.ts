@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { ObjectId } from 'mongodb'
 import { upload } from '../../constants/multer'
-import { MAX_CONTAINER_FILES } from '../../constants/config'
+import { MAX_CONTAINER_FILES, MAX_CONTAINER_SIZE_MB } from '../../constants/config'
 import {
   getContainerOrNull,
   appendImagesToContainer,
@@ -12,7 +12,12 @@ import {
 import { imageContainerToDTO } from '../../dto/imageContainerToDTO'
 import { validateFileUpload } from '../../middleware/validateFileUpload'
 import { withAuth } from '../../middleware/withAuth'
-import { RequestWithAuth, AddImagesToContainerAPIResponse, ImageActionAPIResponse } from '../../types/api'
+import {
+  RequestWithAuth,
+  AddImagesToContainerAPIResponse,
+  ImageActionAPIResponse,
+  GetConstraintsAPIResponse,
+} from '../../types/api'
 import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { deleteImageFiles } from '../../util/imageUtils'
 import { onContainerUpdated } from '../../api/internal'
@@ -33,6 +38,19 @@ const handleCompareImages = async (prevContainer: ImageContainer, nextContainer:
     await onContainerUpdated(nextContainer._id.toString())
   }
 }
+
+router.get('/constraints', async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+  try {
+    const response: GetConstraintsAPIResponse = {
+      max_size_mb: MAX_CONTAINER_SIZE_MB,
+      max_files: MAX_CONTAINER_FILES,
+    }
+
+    res.status(200).send(response)
+  } catch (err) {
+    next(err)
+  }
+})
 
 router.post(
   '/:id',
