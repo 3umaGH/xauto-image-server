@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Image, ImageContainer } from '../types/image'
 import fs from 'fs'
+import { IMAGE_SERVER_URL } from '../constants/config'
 
 export const mapFilesToListingImages = (containerID: string, files: Express.Multer.File[]) => {
   return files.map(
@@ -8,7 +9,7 @@ export const mapFilesToListingImages = (containerID: string, files: Express.Mult
       ({
         id: uuidv4().toString(),
         order: index,
-        url: `http://localhost:8001/cdn/${containerID}/${file.filename}`,
+        url: `${IMAGE_SERVER_URL}/cdn/${containerID}/${file.filename}`,
         status: 'OPTIMIZING',
 
         size: file.size,
