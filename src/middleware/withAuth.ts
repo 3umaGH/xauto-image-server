@@ -3,9 +3,16 @@ import admin, { ServiceAccount } from 'firebase-admin'
 import { RequestWithAuth } from '../types/api'
 import { serviceAccount } from '../firebase/serviceAccount'
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as ServiceAccount),
-})
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as ServiceAccount),
+  })
+
+  console.log('Firebase Admin initialized successfully')
+} catch (error) {
+  console.error('Error initializing Firebase Admin:', error)
+  process.exit(1)
+}
 
 export const withAuth = async (req: RequestWithAuth, res: Response, next: NextFunction) => {
   try {
