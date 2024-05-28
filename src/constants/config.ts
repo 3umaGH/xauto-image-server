@@ -1,5 +1,4 @@
 import dotenv from 'dotenv'
-import path from 'path'
 dotenv.config()
 
 export const EXPRESS_PORT = process.env.PORT || 8001

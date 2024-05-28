@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid'
-import { Image, ImageContainer } from '../types/image'
 import fs from 'fs'
+import { v4 as uuidv4 } from 'uuid'
 import { IMAGE_SERVER_URL } from '../constants/config'
+import { Image, ImageContainer } from '../types/image'
 
 export const mapFilesToListingImages = (containerID: string, files: Express.Multer.File[]) => {
   return files.map(

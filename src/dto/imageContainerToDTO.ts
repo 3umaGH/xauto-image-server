@@ -1,5 +1,5 @@
-import { Image, ImageContainer } from '../types/image'
 import { ImageContainerDTO, ImageDTO } from '../types/dto/imageContainerDTO'
+import { Image, ImageContainer } from '../types/image'
 import { bytesToMB, roundDecimals } from '../util/util'
 
 export const imageContainerToDTO = (container: ImageContainer): ImageContainerDTO => {

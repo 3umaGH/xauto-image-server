@@ -1,8 +1,6 @@
-import express, { Request, Response, NextFunction } from 'express'
-import admin, { ServiceAccount } from 'firebase-admin'
-import { RequestWithAuth } from '../types/api'
-import { serviceAccount } from '../firebase/serviceAccount'
+import { NextFunction, Response } from 'express'
 import { INTERNAL_SECRET_API_KEY } from '../constants/config'
+import { RequestWithAuth } from '../types/api'
 
 export const withInternalSecret = async (req: RequestWithAuth, res: Response, next: NextFunction) => {
   try {

@@ -1,11 +1,10 @@
-import { db } from '../database'
-import { ObjectId } from 'mongodb'
 import fs from 'fs'
-import { IMAGE_CONTAINER_ACTION, Image, ImageContainer } from '../../types/image'
+import { ObjectId } from 'mongodb'
+import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES } from '../../constants/config'
 import { optimizeImage } from '../../optimizer'
+import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { calculateContainerSize, getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
-import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES, MAX_CONTAINER_SIZE_MB } from '../../constants/config'
-import { bytesToMB } from '../../util/util'
+import { db } from '../database'
 
 const col = db.collection(IMAGE_CONTAINER_COLLETION)
 

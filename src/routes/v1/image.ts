@@ -1,26 +1,25 @@
-import { NextFunction, Request, Response } from 'express'
+import { NextFunction, Response } from 'express'
 import { ObjectId } from 'mongodb'
-import { upload } from '../../constants/multer'
+import { onContainerUpdated } from '../../api/internal'
 import { MAX_CONTAINER_FILES, MAX_CONTAINER_SIZE_MB } from '../../constants/config'
+import { upload } from '../../constants/multer'
 import {
-  getContainerOrNull,
   appendImagesToContainer,
-  createImageContainer,
   deleteImageFromContainer,
-  imageChangeOrder,
+  getContainerOrNull,
+  imageChangeOrder
 } from '../../database/operations/imageOperations'
 import { imageContainerToDTO } from '../../dto/imageContainerToDTO'
 import { validateFileUpload } from '../../middleware/validateFileUpload'
 import { withAuth } from '../../middleware/withAuth'
 import {
-  RequestWithAuth,
   AddImagesToContainerAPIResponse,
-  ImageActionAPIResponse,
   GetConstraintsAPIResponse,
+  ImageActionAPIResponse,
+  RequestWithAuth,
 } from '../../types/api'
 import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { deleteImageFiles } from '../../util/imageUtils'
-import { onContainerUpdated } from '../../api/internal'
 
 const express = require('express')
 const router = express.Router()

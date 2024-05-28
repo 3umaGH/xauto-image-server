@@ -1,6 +1,6 @@
+import dotenv from 'dotenv'
 import { Db, MongoClient } from 'mongodb'
 import { MONGO_DBNAME } from '../constants/config'
-import dotenv from 'dotenv'
 
 dotenv.config()
 

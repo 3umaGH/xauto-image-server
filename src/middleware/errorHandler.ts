@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express'
+import { NextFunction, Request, Response } from 'express'
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(`[${new Date().toLocaleTimeString()}]`, 'Message:', err.message, `| URL: ${req.url}`, '| IP:', req.ip)

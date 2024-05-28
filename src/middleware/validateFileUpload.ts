@@ -1,10 +1,9 @@
-import { Request, Response, NextFunction } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { ObjectId } from 'mongodb'
 import { MAX_CONTAINER_FILES, MAX_CONTAINER_SIZE_MB } from '../constants/config'
-import { getContainer, getContainerOrNull } from '../database/operations/imageOperations'
-import { bytesToMB } from '../util/util'
-import fs from 'fs'
+import { getContainerOrNull } from '../database/operations/imageOperations'
 import { deleteImageFiles } from '../util/imageUtils'
+import { bytesToMB } from '../util/util'
 
 export const validateFileUpload = async (req: Request, res: Response, next: NextFunction) => {
   try {
