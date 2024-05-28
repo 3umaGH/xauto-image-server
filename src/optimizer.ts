@@ -17,7 +17,7 @@ export const optimizeImage = async (path: string): Promise<number> => {
 
   while (retries < MAX_RETRIES) {
     try {
-      await sharp(path).resize({ height: 920, fit: 'cover' }).webp({ quality: 70 }).toFile(`${path}-temp`)
+      await sharp(path).rotate().resize({ height: 920, fit: 'cover' }).webp({ quality: 70 }).toFile(`${path}-temp`)
 
       const stats = await fs.promises.stat(`${path}-temp`)
       const file_size = stats.size
