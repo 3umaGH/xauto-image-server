@@ -1,7 +1,6 @@
-import express, { Request, Response, Application, NextFunction } from 'express'
+import express, { Application } from 'express'
 import cors from 'cors'
-import path from 'path'
-import { EXPRESS_PORT } from './constants/config'
+import { EXPRESS_PORT, UPLOADS_PATH } from './constants/config'
 import { errorHandler } from './middleware/errorHandler'
 import { connectDB } from './database/database'
 import { withInternalSecret } from './middleware/withInternalSecret'
@@ -22,7 +21,9 @@ const startServer = async () => {
 
   app.use('/v1/image', require('./routes/v1/image'))
   app.use('/v1/internal', withInternalSecret, require('./routes/v1/internal'))
-  app.use('/cdn', express.static(path.join(__dirname, './../uploads')))
+  app.use('/cdn', express.static(UPLOADS_PATH))
+
+  console.log(`Serving static files from: ${UPLOADS_PATH}`)
 
   app.use(errorHandler)
 

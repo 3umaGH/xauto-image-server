@@ -1,13 +1,12 @@
 import multer from 'multer'
-import { MAX_CONTAINER_SIZE_MB } from './config'
+import { MAX_CONTAINER_SIZE_MB, UPLOADS_PATH } from './config'
 import * as fs from 'fs'
-import { getContainerOrNull } from '../database/operations/imageOperations'
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const destinationFolder = req.params.id || 'default'
 
-    const uploadDir = `uploads/${destinationFolder}`
+    const uploadDir = `${UPLOADS_PATH}/${destinationFolder}`
 
     fs.mkdir(uploadDir, { recursive: true }, (err: NodeJS.ErrnoException | null) => {
       if (err) return cb(err, uploadDir)
@@ -22,7 +21,7 @@ const storage = multer.diskStorage({
 })
 
 export const upload = multer({
-  dest: 'uploads/',
+  dest: UPLOADS_PATH,
   storage: storage,
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {
