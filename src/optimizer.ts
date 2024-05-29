@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import fs from 'fs'
 
+const WATERMARK = './src/assets/watermark.png'
 const RETRY_INTERVAL_MS = 1000
 const MAX_RETRIES = 3
 
@@ -17,7 +18,21 @@ export const optimizeImage = async (path: string): Promise<number> => {
 
   while (retries < MAX_RETRIES) {
     try {
-      await sharp(path).rotate().resize({ height: 920, fit: 'cover' }).webp({ quality: 70 }).toFile(`${path}-temp`)
+      await sharp(path)
+        .rotate()
+        .resize({ height: 920, fit: 'cover' })
+        .composite([
+          {
+            input: WATERMARK,
+            gravity: 'southeast',
+          },
+          {
+            input: WATERMARK,
+            gravity: 'southwest',
+          },
+        ])
+        .webp({ quality: 70 })
+        .toFile(`${path}-temp`)
 
       const stats = await fs.promises.stat(`${path}-temp`)
       const file_size = stats.size
