@@ -39,7 +39,9 @@ const optimizeContainerImages = async (id: ObjectId) => {
         )
       } catch (err) {
         if (err instanceof Error) {
-          await fs.promises.rm(img.local_path)
+          try {
+            await fs.promises.rm(img.local_path)
+          } catch {}
 
           col.updateOne(
             { _id: id, 'images.id': img.id },
