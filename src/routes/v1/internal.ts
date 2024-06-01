@@ -10,6 +10,7 @@ router.post('/container/:id', async (req: Request, res: Response, next: NextFunc
     const containerID = new ObjectId(req.params.id)
 
     await createImageContainer(req.body.ownerId, containerID, [])
+    console.log(`New image container created by ${req.body.ownerId}`)
 
     return res.sendStatus(200)
   } catch (err) {
@@ -22,6 +23,7 @@ router.delete('/container/:id', async (req: Request, res: Response, next: NextFu
     const containerID = new ObjectId(req.params.id)
 
     await deleteContainer(containerID)
+    console.log(`Image container ${containerID} has been deleted.`)
 
     return res.sendStatus(200)
   } catch (err) {
