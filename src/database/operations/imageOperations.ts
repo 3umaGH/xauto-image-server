@@ -114,6 +114,18 @@ const updateTotalContainerSize = async (id: ObjectId) => {
   return col.updateOne({ _id: id }, { $set: { total_size: newSize } })
 }
 
+export const deleteContainer = async (id: ObjectId) => {
+  const container = await getContainer(id)
+
+  container.images.forEach(image => {
+    fs.promises.unlink(image.local_path).catch(err => {
+      console.log('Failed deleting image on container deletion, err:', err)
+    })
+  })
+
+  return col.deleteOne({ _id: id })
+}
+
 export const deleteImageFromContainer = async (authUID: string, container: ImageContainer, imageId: string) => {
   let images = container.images
   const targetIndex = images.findIndex(img => img.id === imageId)

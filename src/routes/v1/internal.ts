@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { ObjectId } from 'mongodb'
-import { createImageContainer } from '../../database/operations/imageOperations'
+import { createImageContainer, deleteContainer } from '../../database/operations/imageOperations'
 
 const express = require('express')
 const router = express.Router()
@@ -10,6 +10,18 @@ router.post('/container/:id', async (req: Request, res: Response, next: NextFunc
     const containerID = new ObjectId(req.params.id)
 
     await createImageContainer(req.body.ownerId, containerID, [])
+
+    return res.sendStatus(200)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/container/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const containerID = new ObjectId(req.params.id)
+
+    await deleteContainer(containerID)
 
     return res.sendStatus(200)
   } catch (err) {
