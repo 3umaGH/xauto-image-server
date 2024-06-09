@@ -4,6 +4,8 @@ import { EXPRESS_PORT, UPLOADS_PATH } from './constants/config'
 import { errorHandler } from './middleware/errorHandler'
 import { connectDB } from './database/database'
 import { withInternalSecret } from './middleware/withInternalSecret'
+import rateLimit from 'express-rate-limit'
+import { rateLimitHandler } from './rateLimiterHandler'
 
 const app: Application = express()
 
@@ -16,12 +18,20 @@ app.use(
   })
 )
 
+export const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+})
+
 const startServer = async () => {
   await connectDB()
 
-  app.use('/v1/image', require('./routes/v1/image'))
+  app.use('/v1/image', generalLimiter, require('./routes/v1/image'))
   app.use('/v1/internal', withInternalSecret, require('./routes/v1/internal'))
-  app.use('/cdn', express.static(UPLOADS_PATH))
+  app.use('/cdn', generalLimiter, express.static(UPLOADS_PATH))
 
   console.log(`Serving static files from: ${UPLOADS_PATH}`)
 
