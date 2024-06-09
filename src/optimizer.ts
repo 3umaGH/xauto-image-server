@@ -18,19 +18,27 @@ export const optimizeImage = async (path: string): Promise<number> => {
 
   while (retries < MAX_RETRIES) {
     try {
+      const image = sharp(path)
+      const metadata = await image.metadata()
+
+      const compositeJob = []
+
+      compositeJob.push({
+        input: WATERMARK,
+        gravity: 'southeast',
+      })
+
+      if (metadata.width ?? 0 > 1000) {
+        compositeJob.push({
+          input: WATERMARK,
+          gravity: 'southwest',
+        })
+      }
+
       await sharp(path)
         .rotate()
         .resize({ height: 920, fit: 'cover' })
-        .composite([
-          {
-            input: WATERMARK,
-            gravity: 'southeast',
-          },
-          {
-            input: WATERMARK,
-            gravity: 'southwest',
-          },
-        ])
+        .composite(compositeJob)
         .webp({ quality: 70 })
         .toFile(`${path}-temp`)
 
