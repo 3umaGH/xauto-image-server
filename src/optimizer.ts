@@ -28,7 +28,7 @@ export const optimizeImage = async (path: string): Promise<number> => {
         gravity: 'southeast',
       })
 
-      if (metadata.width ?? 0 > 1000) {
+      if ((metadata.width ?? 0) > 1000) {
         compositeJob.push({
           input: WATERMARK,
           gravity: 'southwest',
