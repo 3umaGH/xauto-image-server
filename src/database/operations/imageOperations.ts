@@ -121,6 +121,10 @@ export const deleteContainer = async (id: ObjectId) => {
     fs.promises.unlink(image.local_path).catch(err => {
       console.log('Failed deleting image on container deletion, err:', err)
     })
+
+    fs.promises.unlink(image.local_path.replace('.webp', '-thumb.webp')).catch(err => {
+      console.log('Failed deleting thumbnail image on container deletion, err:', err)
+    })
   })
 
   return col.deleteOne({ _id: id })
@@ -133,6 +137,7 @@ export const deleteImageFromContainer = async (authUID: string, container: Image
   if (targetIndex === -1) throw new Error('Image not found')
 
   fs.promises.unlink(images[targetIndex].local_path).catch(() => {})
+  fs.promises.unlink(images[targetIndex].local_path.replace('.webp', '-thumb.webp')).catch(() => {})
 
   images = images.filter(img => img.id !== imageId).map((image, index) => ({ ...image, order: index }))
 
