@@ -10,7 +10,7 @@ export const imageContainerToDTO = (container: ImageContainer): ImageContainerDT
 }
 
 const imageToDTO = (image: Image): ImageDTO => {
-  const { id, order, url, size, status } = image
+  const { id, order, url, thumb, size, status } = image
 
-  return { id, order, url, size, status, ...(image.status === 'ERROR' ? { error: image.error } : {}) }
+  return { id, order, url, thumb, size, status, ...(image.status === 'ERROR' ? { error: image.error } : {}) }
 }
