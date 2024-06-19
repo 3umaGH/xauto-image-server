@@ -42,6 +42,12 @@ export const optimizeImage = async (path: string): Promise<number> => {
         .webp({ quality: 70 })
         .toFile(`${path}-temp`)
 
+      await sharp(path)
+        .rotate()
+        .resize({ height: 64, fit: 'cover' })
+        .webp({ quality: 50 })
+        .toFile(`${path.replace('.webp', '-thumb.webp')}`)
+
       const stats = await fs.promises.stat(`${path}-temp`)
       const file_size = stats.size
 

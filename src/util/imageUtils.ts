@@ -10,6 +10,8 @@ export const mapFilesToListingImages = (containerID: string, files: Express.Mult
         id: uuidv4().toString(),
         order: index,
         url: `${IMAGE_SERVER_URL}/cdn/${containerID}/${file.filename}`,
+        thumb: `${IMAGE_SERVER_URL}/cdn/${containerID}/${file.filename.replace('.webp', '-thumb.webp')}`,
+
         status: 'OPTIMIZING',
 
         size: file.size,

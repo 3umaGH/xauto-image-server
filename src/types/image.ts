@@ -15,6 +15,7 @@ type ImageBase = {
   id: string
   order: number
   url: string
+  thumb: string
 
   size: number
   local_path: string
