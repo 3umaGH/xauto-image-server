@@ -26,12 +26,20 @@ export const generalLimiter = rateLimit({
   handler: rateLimitHandler,
 })
 
+export const cdnLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 250,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+})
+
 const startServer = async () => {
   await connectDB()
 
   app.use('/v1/image', generalLimiter, require('./routes/v1/image'))
   app.use('/v1/internal', withInternalSecret, require('./routes/v1/internal'))
-  app.use('/cdn', generalLimiter, express.static(UPLOADS_PATH))
+  app.use('/cdn', cdnLimiter, express.static(UPLOADS_PATH))
 
   console.log(`Serving static files from: ${UPLOADS_PATH}`)
 
