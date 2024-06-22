@@ -7,19 +7,22 @@ import {
   appendImagesToContainer,
   deleteImageFromContainer,
   getContainerOrNull,
-  imageChangeOrder
+  imageChangeOrder,
 } from '../../database/operations/imageOperations'
 import { imageContainerToDTO } from '../../dto/imageContainerToDTO'
 import { validateFileUpload } from '../../middleware/validateFileUpload'
 import { withAuth } from '../../middleware/withAuth'
 import {
-  AddImagesToContainerAPIResponse,
-  GetConstraintsAPIResponse,
-  ImageActionAPIResponse,
+  addImagesToContainerAPIResponse,
+  getConstraintsAPIResponse,
+  getContainerImagesAPIResponse,
+  getContainerImagesAsOwnerAPIResponse,
+  imageActionAPIResponse,
   RequestWithAuth,
 } from '../../types/api'
 import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { deleteImageFiles } from '../../util/imageUtils'
+import { withOptionalAuth } from '../../middleware/withOptionalAuth'
 
 const express = require('express')
 const router = express.Router()
@@ -40,7 +43,7 @@ const handleCompareImages = async (prevContainer: ImageContainer, nextContainer:
 
 router.get('/constraints', async (req: RequestWithAuth, res: Response, next: NextFunction) => {
   try {
-    const response: GetConstraintsAPIResponse = {
+    const response: getConstraintsAPIResponse = {
       max_size_mb: MAX_CONTAINER_SIZE_MB,
       max_files: MAX_CONTAINER_FILES,
     }
@@ -72,11 +75,11 @@ router.post(
 
       if (existingContainer._owner != authUID) {
         deleteImageFiles(req.files as Express.Multer.File[])
-        return res.status(401).send({ message: 'Unauthorized' })
+        return res.status(403).send({ message: 'Unauthorized' })
       }
 
       const result = await appendImagesToContainer(req.decodedAuth!.uid, containerID, files)
-      const response: AddImagesToContainerAPIResponse = imageContainerToDTO(result)
+      const response: addImagesToContainerAPIResponse = imageContainerToDTO(result, true)
 
       await handleCompareImages(existingContainer, result)
       return res.status(200).send(response)
@@ -106,7 +109,7 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
     }
 
     if (container._owner != authUID) {
-      return res.status(401).send({ message: 'Unauthorized' })
+      return res.status(403).send({ message: 'Unauthorized' })
     }
 
     const targetIndex = container.images.findIndex(img => img.id === imageId)
@@ -117,7 +120,7 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
 
     if (action === IMAGE_CONTAINER_ACTION.DELETE) {
       const result = await deleteImageFromContainer(req.decodedAuth!.uid, container, imageId)
-      const response: ImageActionAPIResponse = imageContainerToDTO(result)
+      const response: imageActionAPIResponse = imageContainerToDTO(result, true)
 
       await handleCompareImages(container, result)
       return res.status(200).send(response)
@@ -127,12 +130,12 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
       const result = await imageChangeOrder(req.decodedAuth!.uid, container, imageId, action)
 
       if (result) {
-        const response: ImageActionAPIResponse = imageContainerToDTO(result)
+        const response: imageActionAPIResponse = imageContainerToDTO(result, true)
 
         await handleCompareImages(container, result)
         return res.status(200).send(response)
       } else {
-        return res.status(200).send(imageContainerToDTO(container))
+        return res.status(200).send(imageContainerToDTO(container, true))
       }
     }
 
@@ -142,8 +145,9 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
   }
 })
 
-router.get('/:id', async (req: RequestWithAuth, res: Response, next: NextFunction) => {
+router.get('/:id', withOptionalAuth, async (req: RequestWithAuth, res: Response, next: NextFunction) => {
   try {
+    const authUID = req.decodedAuth?.uid
     const containerID = new ObjectId(req.params.id)
     const existingContainer = await getContainerOrNull(containerID)
 
@@ -151,9 +155,17 @@ router.get('/:id', async (req: RequestWithAuth, res: Response, next: NextFunctio
       return res.status(404).send({ message: 'Container does not exist' })
     }
 
-    const response: AddImagesToContainerAPIResponse = imageContainerToDTO(existingContainer)
+    if (authUID) {
+      if (existingContainer._owner != authUID) {
+        return res.status(403).send({ message: 'Unauthorized' })
+      }
 
-    if (existingContainer) res.status(200).send(response)
+      const response: getContainerImagesAsOwnerAPIResponse = imageContainerToDTO(existingContainer, true)
+      res.status(200).send(response)
+    } else {
+      const response: getContainerImagesAPIResponse = imageContainerToDTO(existingContainer, false)
+      res.status(200).send(response)
+    }
   } catch (err) {
     next(err)
   }
