@@ -30,7 +30,7 @@ const router = express.Router()
 
 /* Sends to the main api internal endpoint a new container, if the first 3 images are different 
 between prev and next container. This is used to update the listings objects preview property. */
-const handleCompareImages = async (prevContainer: ImageContainer, nextContainer: ImageContainer) => {
+export const handleCompareImages = async (prevContainer: ImageContainer, nextContainer: ImageContainer) => {
   const prevImages = prevContainer.images.splice(0, 3).map(img => img.id)
   const newImages = nextContainer.images.splice(0, 3).map(img => img.id)
 
@@ -82,7 +82,6 @@ router.post(
       const result = await appendImagesToContainer(req.decodedAuth!.uid, containerID, files)
       const response: addImagesToContainerAPIResponse = imageContainerToDTO(result, ContainerType.PRIVATE)
 
-      await handleCompareImages(existingContainer, result)
       return res.status(200).send(response)
     } catch (err) {
       deleteImageFiles(req.files as Express.Multer.File[])

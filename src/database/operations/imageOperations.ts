@@ -5,6 +5,7 @@ import { optimizeImage } from '../../optimizer'
 import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { calculateContainerSize, getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
 import { db } from '../database'
+import { handleCompareImages } from '../../routes/v1/image'
 
 const col = db.collection(IMAGE_CONTAINER_COLLETION)
 
@@ -101,6 +102,7 @@ export const appendImagesToContainer = async (authUID: string, id: ObjectId, fil
   await col.updateOne({ _id: id }, { $set: { ...dataObj } })
 
   optimizeContainerImages(id).then(() => {
+    handleCompareImages(container, dataObj)
     updateTotalContainerSize(id)
   })
 
