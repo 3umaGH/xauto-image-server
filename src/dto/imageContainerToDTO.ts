@@ -8,17 +8,17 @@ import {
 import { Image, ImageContainer } from '../types/image'
 import { bytesToMB, roundDecimals } from '../util/util'
 
-export function imageContainerToDTO(container: ImageContainer, privateDTO: true): PrivateImageContainerDTO
-export function imageContainerToDTO(container: ImageContainer, privateDTO: false): PublicImageContainerDTO
+export function imageContainerToDTO(container: ImageContainer, type: ContainerType.PRIVATE): PrivateImageContainerDTO
+export function imageContainerToDTO(container: ImageContainer, type: ContainerType.PUBLIC): PublicImageContainerDTO
 
 export function imageContainerToDTO(
   container: ImageContainer,
-  privateDTO: boolean
+  type: ContainerType
 ): PrivateImageContainerDTO | PublicImageContainerDTO {
   const { _id, images, total_size, _owner } = container
   const total_size_mb = roundDecimals(bytesToMB(total_size), 2)
 
-  if (privateDTO) {
+  if (type === ContainerType.PRIVATE) {
     return {
       _id,
       type: ContainerType.PRIVATE,
