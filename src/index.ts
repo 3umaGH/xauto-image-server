@@ -28,7 +28,7 @@ export const generalLimiter = rateLimit({
 
 export const cdnLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 250,
+  max: 500,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: rateLimitHandler,
