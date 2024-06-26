@@ -10,6 +10,6 @@ export const withInternalSecret = async (req: RequestWithAuth, res: Response, ne
 
     next()
   } catch (error) {
-    return res.status(418)
+    return res.status(418).send(error)
   }
 }
