@@ -1,4 +1,4 @@
-import { WithCreatedUpdatedDates, WithObjectID, WithOwner } from './common'
+import { WithCreatedUpdatedDates, WithObjectID, WithOwner, WithOwnerType } from './common'
 
 export type ImageStatus = 'OPTIMIZING' | 'ERROR' | 'READY'
 export type Image = ImageInProcess | OptimizedImage | ImageWithError
@@ -7,7 +7,7 @@ export type DraftImageContainer = {
   total_size: number
   images: Image[]
 } & WithCreatedUpdatedDates &
-  WithOwner
+  WithOwner & WithOwnerType
 
 export type ImageContainer = DraftImageContainer & WithObjectID
 

@@ -8,8 +8,10 @@ const router = express.Router()
 router.post('/container/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const containerID = new ObjectId(req.params.id)
+    const ownerType = req.body.ownerType
+    const ownerID = req.body.ownerId
 
-    await createImageContainer(req.body.ownerId, containerID, [])
+    await createImageContainer(ownerID, ownerType, containerID, [])
     console.log(`New image container created by ${req.body.ownerId}`)
 
     return res.sendStatus(200)

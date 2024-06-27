@@ -24,6 +24,7 @@ import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { deleteImageFiles } from '../../util/imageUtils'
 import { withOptionalAuth } from '../../middleware/withOptionalAuth'
 import { ContainerType } from '../../types/dto/imageContainerDTO'
+import { isUserUIDInOrganization } from '../../util/util'
 
 const express = require('express')
 const router = express.Router()
@@ -74,9 +75,20 @@ router.post(
         return res.status(404).send({ message: 'Container not found' })
       }
 
-      if (existingContainer._owner != authUID) {
-        deleteImageFiles(req.files as Express.Multer.File[])
-        return res.status(403).send({ message: 'Unauthorized' })
+      if (existingContainer._owner_type === 'private') {
+        if (existingContainer._owner != authUID) {
+          deleteImageFiles(req.files as Express.Multer.File[])
+          return res.status(403).send({ message: 'Unauthorized' })
+        }
+      }
+
+      if (existingContainer._owner_type === 'organization') {
+        const isInitiatorEmployee = await isUserUIDInOrganization(existingContainer._owner, authUID)
+
+        if (!isInitiatorEmployee) {
+          deleteImageFiles(req.files as Express.Multer.File[])
+          return res.status(403).send({ message: 'Unauthorized' })
+        }
       }
 
       const result = await appendImagesToContainer(req.decodedAuth!.uid, containerID, files)
@@ -108,8 +120,18 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
       return res.status(404).send({ message: 'Container does not exist' })
     }
 
-    if (container._owner != authUID) {
-      return res.status(403).send({ message: 'Unauthorized' })
+    if (container._owner_type === 'private') {
+      if (container._owner != authUID) {
+        return res.status(403).send({ message: 'Unauthorized' })
+      }
+    }
+
+    if (container._owner_type === 'organization') {
+      const isInitiatorEmployee = await isUserUIDInOrganization(container._owner, authUID)
+
+      if (!isInitiatorEmployee) {
+        return res.status(403).send({ message: 'Unauthorized' })
+      }
     }
 
     const targetIndex = container.images.findIndex(img => img.id === imageId)
@@ -149,24 +171,31 @@ router.get('/:id', withOptionalAuth, async (req: RequestWithAuth, res: Response,
   try {
     const authUID = req.decodedAuth?.uid
     const containerID = new ObjectId(req.params.id)
-    const existingContainer = await getContainerOrNull(containerID)
+    const container = await getContainerOrNull(containerID)
 
-    if (!existingContainer) {
+    if (!container) {
       return res.status(404).send({ message: 'Container does not exist' })
     }
 
     if (authUID) {
-      if (existingContainer._owner != authUID) {
-        return res.status(403).send({ message: 'Unauthorized' })
+      if (container._owner_type === 'private') {
+        if (container._owner != authUID) {
+          return res.status(403).send({ message: 'Unauthorized' })
+        }
       }
 
-      const response: getContainerImagesAsOwnerAPIResponse = imageContainerToDTO(
-        existingContainer,
-        ContainerType.PRIVATE
-      )
+      if (container._owner_type === 'organization') {
+        const isInitiatorEmployee = await isUserUIDInOrganization(container._owner, authUID)
+
+        if (!isInitiatorEmployee) {
+          return res.status(403).send({ message: 'Unauthorized' })
+        }
+      }
+
+      const response: getContainerImagesAsOwnerAPIResponse = imageContainerToDTO(container, ContainerType.PRIVATE)
       res.status(200).send(response)
     } else {
-      const response: getContainerImagesAPIResponse = imageContainerToDTO(existingContainer, ContainerType.PUBLIC)
+      const response: getContainerImagesAPIResponse = imageContainerToDTO(container, ContainerType.PUBLIC)
       res.status(200).send(response)
     }
   } catch (err) {

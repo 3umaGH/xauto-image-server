@@ -1,13 +1,14 @@
 import fs from 'fs'
-import { ObjectId } from 'mongodb'
+import { Collection, ObjectId } from 'mongodb'
 import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES } from '../../constants/config'
 import { optimizeImage } from '../../optimizer'
 import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { calculateContainerSize, getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
 import { db } from '../database'
 import { handleCompareImages } from '../../routes/v1/image'
+import { OwnerType } from '../../types/common'
 
-const col = db.collection(IMAGE_CONTAINER_COLLETION)
+const col: Collection<ImageContainer> = db.collection(IMAGE_CONTAINER_COLLETION)
 
 export const getContainerOrNull = async (id: ObjectId) => {
   const container = (await col.findOne({ _id: id })) as ImageContainer | null
@@ -56,6 +57,7 @@ const optimizeContainerImages = async (id: ObjectId) => {
 
 export const createImageContainer = async (
   authUID: string,
+  ownerType: OwnerType,
   id: ObjectId,
   initialFiles: Express.Multer.File[]
 ): Promise<ImageContainer> => {
@@ -68,6 +70,7 @@ export const createImageContainer = async (
     images: mapFilesToListingImages(id.toString(), initialFiles),
 
     _owner: authUID,
+    _owner_type: ownerType,
     _createdAt: new Date().getTime(),
     _updatedAt: new Date().getTime(),
     _updatedBy: authUID,

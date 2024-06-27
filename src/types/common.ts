@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb"
+import { ObjectId } from 'mongodb'
 
 export type WithObjectID = {
   _id: ObjectId
@@ -7,6 +7,12 @@ export type WithObjectID = {
 export type WithOwner = {
   _owner: string
 }
+
+export type WithOwnerType = {
+  _owner_type: OwnerType
+}
+
+export type OwnerType = 'private' | 'organization'
 
 export type WithCreatedUpdatedDates = {
   _createdAt: number
