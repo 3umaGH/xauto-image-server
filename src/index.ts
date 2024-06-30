@@ -10,6 +10,7 @@ import { rateLimitHandler } from './rateLimiterHandler'
 const app: Application = express()
 
 app.use(express.json())
+app.set('trust proxy', 3)
 
 app.use(
   cors({
