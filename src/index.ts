@@ -6,6 +6,7 @@ import { connectDB } from './database/database'
 import { withInternalSecret } from './middleware/withInternalSecret'
 import rateLimit from 'express-rate-limit'
 import { rateLimitHandler } from './rateLimiterHandler'
+import { getTotalFilesAndSize } from './fileCounter'
 
 const app: Application = express()
 
@@ -43,6 +44,16 @@ const startServer = async () => {
   app.use('/cdn', cdnLimiter, express.static(UPLOADS_PATH))
 
   console.log(`Serving static files from: ${UPLOADS_PATH}`)
+
+  getTotalFilesAndSize(UPLOADS_PATH)
+    .then(res => {
+      console.log(
+        `${UPLOADS_PATH}: files: ${res.totalFiles.toLocaleString()} | files size: ${res.totalSize.toLocaleString()} bytes`
+      )
+    })
+    .catch(err => {
+      console.error(`Error: ${err.message}`)
+    })
 
   app.use(errorHandler)
 
