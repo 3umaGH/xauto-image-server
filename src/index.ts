@@ -5,8 +5,8 @@ import { errorHandler } from './middleware/errorHandler'
 import { connectDB } from './database/database'
 import { withInternalSecret } from './middleware/withInternalSecret'
 import rateLimit from 'express-rate-limit'
-import { rateLimitHandler } from './rateLimiterHandler'
-import { getTotalFilesAndSize } from './fileCounter'
+import { rateLimitHandler } from './services/rateLimitHandler'
+import { getTotalFilesAndSize } from './services/fileCounter'
 
 const app: Application = express()
 

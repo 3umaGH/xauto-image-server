@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { Collection, ObjectId } from 'mongodb'
 import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES } from '../../constants/config'
-import { optimizeImage } from '../../optimizer'
+import { optimizeImage } from '../../services/optimizer'
 import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
 import { calculateContainerSize, getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
 import { db } from '../database'
