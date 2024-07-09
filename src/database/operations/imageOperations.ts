@@ -1,12 +1,12 @@
 import fs from 'fs'
 import { Collection, ObjectId } from 'mongodb'
 import { IMAGE_CONTAINER_COLLETION, MAX_CONTAINER_FILES } from '../../constants/config'
+import { handleCompareImages } from '../../routes/v1/image'
 import { optimizeImage } from '../../services/optimizer'
-import { IMAGE_CONTAINER_ACTION, ImageContainer } from '../../types/image'
+import { OwnerType } from '../../types/common'
+import { ImageContainer } from '../../types/image'
 import { calculateContainerSize, getTotalFileSize, mapFilesToListingImages } from '../../util/imageUtils'
 import { db } from '../database'
-import { handleCompareImages } from '../../routes/v1/image'
-import { OwnerType } from '../../types/common'
 
 const col: Collection<ImageContainer> = db.collection(IMAGE_CONTAINER_COLLETION)
 
@@ -35,7 +35,7 @@ const optimizeContainerImages = async (id: ObjectId) => {
       try {
         const newFileSize = await optimizeImage(img.local_path)
 
-        col.updateOne(
+        await col.updateOne(
           { _id: id, 'images.id': img.id },
           { $set: { 'images.$.status': 'DONE', 'images.$.size': newFileSize } }
         )
@@ -45,7 +45,7 @@ const optimizeContainerImages = async (id: ObjectId) => {
             await fs.promises.rm(img.local_path)
           } catch {}
 
-          col.updateOne(
+          await col.updateOne(
             { _id: id, 'images.id': img.id },
             { $set: { 'images.$.status': 'ERROR', 'images.$.error': err.message } }
           )
@@ -97,6 +97,7 @@ export const appendImagesToContainer = async (authUID: string, id: ObjectId, fil
   const dataObj: ImageContainer = {
     ...container,
     images: orderedImages,
+    total_size: orderedImages.reduce((acc: number, image) => (acc += image.size), 0),
 
     _updatedBy: authUID,
     _updatedAt: new Date().getTime(),
