@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { bytesToMB } from '../util/util'
-import { UPLOADS_PATH } from '../constants/config'
+import { MAX_CONTAINER_FILES, MAX_CONTAINER_SIZE_MB, UPLOADS_PATH } from '../constants/config'
 
 interface FileStats {
   totalFiles: number
@@ -39,12 +39,26 @@ export async function getTotalFilesAndSize(dir: string): Promise<FileStats> {
     directoryStats[currentPath] = { totalFiles: dirFiles, totalSize: dirSize }
 
     if (currentPath !== UPLOADS_PATH) {
-      console.log(`${currentPath}: ${dirFiles} files, ${bytesToMB(dirSize).toFixed(2)} MB`)
+      if (dirFiles > MAX_CONTAINER_FILES) {
+        console.error(
+          `[WARNING] More files than allowed (x${MAX_CONTAINER_FILES})! ${currentPath}: ${dirFiles} files, ${bytesToMB(
+            dirSize
+          ).toFixed(2)} MB`
+        )
+      }
+
+      if (bytesToMB(dirSize) > MAX_CONTAINER_SIZE_MB) {
+        console.error(
+          `[WARNING] Bigger size than allowed (${MAX_CONTAINER_SIZE_MB}MB)! ${currentPath}: ${dirFiles} files, ${bytesToMB(
+            dirSize
+          ).toFixed(2)} MB`
+        )
+      }
     }
   }
 
   await traverseDirectory(dir)
 
-  console.log(`Total: ${totalFiles} files, ${bytesToMB(totalSize).toFixed(2)} MB`)
+  console.log(`Volume: ${totalFiles} files, ${bytesToMB(totalSize).toFixed(2)} MB`)
   return { totalFiles, totalSize }
 }
