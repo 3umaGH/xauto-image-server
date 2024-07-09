@@ -46,14 +46,6 @@ const startServer = async () => {
   console.log(`Serving static files from: ${UPLOADS_PATH}`)
 
   getTotalFilesAndSize(UPLOADS_PATH)
-    .then(res => {
-      console.log(
-        `${UPLOADS_PATH}: files: ${res.totalFiles.toLocaleString()} | files size: ${res.totalSize.toLocaleString()} bytes`
-      )
-    })
-    .catch(err => {
-      console.error(`Error: ${err.message}`)
-    })
 
   app.use(errorHandler)
 
