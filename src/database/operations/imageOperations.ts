@@ -165,55 +165,24 @@ export const imageChangeOrder = async (
   authUID: string,
   container: ImageContainer,
   imageId: string,
-  action: IMAGE_CONTAINER_ACTION.MOVE_UP_ORDER | IMAGE_CONTAINER_ACTION.MOVE_DOWN_ORDER
+  newOrder: number
 ) => {
   let images = [...container.images]
-  let hasUpdated = false
-
   const targetIndex = images.findIndex(img => img.id === imageId)
 
   if (targetIndex === -1) throw new Error('Image not found')
+  if (targetIndex === newOrder) return container
 
-  if (action === IMAGE_CONTAINER_ACTION.MOVE_UP_ORDER) {
-    const nextItem = targetIndex - 1
+  const removedItem = images.splice(targetIndex, 1)[0]
+  images.splice(newOrder, 0, removedItem)
 
-    if (images[targetIndex].order === 0) {
-      return false
-    }
-
-    if (targetIndex > -1 && nextItem > -1) {
-      images[targetIndex].order = images[targetIndex].order - 1
-      images[nextItem].order = images[nextItem].order + 1
-      hasUpdated = true
-    }
+  const updatedContainer: ImageContainer = {
+    ...container,
+    images: images.map((img, index) => ({ ...img, order: index })),
+    _updatedBy: authUID,
+    _updatedAt: new Date().getTime(),
   }
+  await col.updateOne({ _id: container._id }, { $set: updatedContainer })
 
-  if (action === IMAGE_CONTAINER_ACTION.MOVE_DOWN_ORDER) {
-    const nextItem = targetIndex + 1
-
-    if (images[targetIndex].order >= images.length - 1) {
-      return false
-    }
-
-    if (targetIndex > -1 && nextItem > -1) {
-      images[targetIndex].order = images[targetIndex].order + 1
-      images[nextItem].order = images[nextItem].order - 1
-      hasUpdated = true
-    }
-  }
-
-  if (!hasUpdated) {
-    return false
-  } else {
-    const updatedContainer: ImageContainer = {
-      ...container,
-      images: images.sort((a, b) => a.order - b.order),
-      _updatedBy: authUID,
-      _updatedAt: new Date().getTime(),
-    }
-
-    await col.updateOne({ _id: container._id }, { $set: updatedContainer })
-
-    return updatedContainer
-  }
+  return updatedContainer
 }

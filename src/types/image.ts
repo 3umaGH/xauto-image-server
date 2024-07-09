@@ -35,7 +35,6 @@ type OptimizedImage = ImageBase & {
 }
 
 export enum IMAGE_CONTAINER_ACTION {
-  MOVE_DOWN_ORDER,
-  MOVE_UP_ORDER,
+  MOVE_ORDER,
   DELETE,
 }

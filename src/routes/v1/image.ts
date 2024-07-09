@@ -148,8 +148,14 @@ router.post('/action/:id/:imageId', withAuth, async (req: RequestWithAuth, res: 
       return res.status(200).send(response)
     }
 
-    if (action === IMAGE_CONTAINER_ACTION.MOVE_UP_ORDER || action === IMAGE_CONTAINER_ACTION.MOVE_DOWN_ORDER) {
-      const result = await imageChangeOrder(req.decodedAuth!.uid, container, imageId, action)
+    if (action === IMAGE_CONTAINER_ACTION.MOVE_ORDER) {
+      const newOrder = parseInt(req.body.order)
+
+      if (isNaN(newOrder) || newOrder > container.images.length || newOrder < 0) {
+        return res.status(404).send({ message: 'Invalid image order' })
+      }
+
+      const result = await imageChangeOrder(req.decodedAuth!.uid, container, imageId, newOrder)
 
       if (result) {
         const response: imageActionAPIResponse = imageContainerToDTO(result, ContainerType.PRIVATE)
